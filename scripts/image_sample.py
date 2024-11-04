@@ -9,6 +9,7 @@ import os
 import numpy as np
 import torch as th
 import torch.distributed as dist
+import wandb
 
 from cm import dist_util, logger
 from cm.script_util import (
@@ -24,7 +25,7 @@ from cm.karras_diffusion import karras_sample
 
 def main():
     args = create_argparser().parse_args()
-
+    
     dist_util.setup_dist()
     logger.configure(dir=args.pth_out)
 

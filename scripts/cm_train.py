@@ -4,6 +4,8 @@ Train a diffusion model on images.
 
 import argparse
 
+import wandb
+
 from cm import dist_util, logger
 from cm.image_datasets import load_data
 from cm.resample import create_named_schedule_sampler
@@ -24,7 +26,7 @@ def main():
     args = create_argparser().parse_args()
 
     dist_util.setup_dist()
-    logger.configure()
+    logger.configure(dir=args.pth_out)
 
     logger.log("creating model and diffusion...")
     ema_scale_fn = create_ema_and_scales_fn(
@@ -53,7 +55,8 @@ def main():
     if args.use_fp16:
         model.convert_to_fp16()
 
-    schedule_sampler = create_named_schedule_sampler(args.schedule_sampler, diffusion)
+    schedule_sampler = create_named_schedule_sampler(
+        args.schedule_sampler, diffusion)
 
     logger.log("creating data loader...")
     if args.batch_size == -1:
@@ -74,7 +77,8 @@ def main():
 
     if len(args.teacher_model_path) > 0:  # path to the teacher score model.
         logger.log(f"loading the teacher model from {args.teacher_model_path}")
-        teacher_model_and_diffusion_kwargs = copy.deepcopy(model_and_diffusion_kwargs)
+        teacher_model_and_diffusion_kwargs = copy.deepcopy(
+            model_and_diffusion_kwargs)
         teacher_model_and_diffusion_kwargs["dropout"] = args.teacher_dropout
         teacher_model_and_diffusion_kwargs["distillation"] = False
         teacher_model, teacher_diffusion = create_model_and_diffusion(
@@ -82,7 +86,8 @@ def main():
         )
 
         teacher_model.load_state_dict(
-            dist_util.load_state_dict(args.teacher_model_path, map_location="cpu"),
+            dist_util.load_state_dict(
+                args.teacher_model_path, map_location="cpu"),
         )
 
         teacher_model.to(dist_util.dev())
@@ -116,6 +121,17 @@ def main():
 
     if args.use_fp16:
         target_model.convert_to_fp16()
+        
+    wandb.login(key="63ce76eebffb80b1165fb79e11d6dbb677cb7db6")
+    wandb.init(
+        project="consistency-model-training",
+        config={
+            # "learning_rate": args.total_training_steps,
+            "architecture": "CM",
+            "dataset": "Imagenet-32",
+            "epochs": args.total_training_steps,
+        }
+    )
 
     logger.log("training...")
     CMTrainLoop(

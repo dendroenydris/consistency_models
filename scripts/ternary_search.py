@@ -29,7 +29,7 @@ def main():
     args = create_argparser().parse_args()
 
     dist_util.setup_dist()
-    logger.configure()
+    logger.configure(dir=args.pth_out)
 
     if "consistency" in args.training_mode:
         distillation = True
