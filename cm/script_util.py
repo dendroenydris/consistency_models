@@ -9,6 +9,7 @@ NUM_CLASSES = 1000
 
 def cm_train_defaults():
     return dict(
+        pth_out="",
         teacher_model_path="",
         teacher_dropout=0.1,
         training_mode="consistency_distillation",
