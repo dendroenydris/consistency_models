@@ -213,6 +213,7 @@ def main():
 
 def create_argparser():
     defaults = dict(
+        pth_out="",
         begin="0",
         end="39",
         training_mode="consistency_distillation",

@@ -71,6 +71,7 @@ def main():
 
 def create_argparser():
     defaults = dict(
+        pth_out="",
         data_dir="",
         schedule_sampler="uniform",
         lr=1e-4,
