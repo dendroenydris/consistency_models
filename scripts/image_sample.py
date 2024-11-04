@@ -26,7 +26,7 @@ def main():
     args = create_argparser().parse_args()
 
     dist_util.setup_dist()
-    logger.configure()
+    logger.configure(dir=args.pth_out)
 
     if "consistency" in args.training_mode:
         distillation = True
@@ -87,15 +87,19 @@ def main():
         sample = sample.permute(0, 2, 3, 1)
         sample = sample.contiguous()
 
-        gathered_samples = [th.zeros_like(sample) for _ in range(dist.get_world_size())]
-        dist.all_gather(gathered_samples, sample)  # gather not supported with NCCL
-        all_images.extend([sample.cpu().numpy() for sample in gathered_samples])
+        gathered_samples = [th.zeros_like(sample)
+                            for _ in range(dist.get_world_size())]
+        # gather not supported with NCCL
+        dist.all_gather(gathered_samples, sample)
+        all_images.extend([sample.cpu().numpy()
+                          for sample in gathered_samples])
         if args.class_cond:
             gathered_labels = [
                 th.zeros_like(classes) for _ in range(dist.get_world_size())
             ]
             dist.all_gather(gathered_labels, classes)
-            all_labels.extend([labels.cpu().numpy() for labels in gathered_labels])
+            all_labels.extend([labels.cpu().numpy()
+                              for labels in gathered_labels])
         logger.log(f"created {len(all_images) * args.batch_size} samples")
 
     arr = np.concatenate(all_images, axis=0)
@@ -130,6 +134,7 @@ def create_argparser():
         s_noise=1.0,
         steps=40,
         model_path="",
+        pth_out="",
         seed=42,
         ts="",
     )
