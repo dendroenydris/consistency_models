@@ -29,7 +29,7 @@ def main():
     args = create_argparser().parse_args()
 
     dist_util.setup_dist()
-    logger.configure()
+    logger.configure(dir=args.pth_out)
 
     if "consistency" in args.training_mode:
         distillation = True
@@ -213,6 +213,7 @@ def main():
 
 def create_argparser():
     defaults = dict(
+        pth_out="",
         begin="0",
         end="39",
         training_mode="consistency_distillation",

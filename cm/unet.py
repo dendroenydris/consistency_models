@@ -288,13 +288,8 @@ class AttentionBlock(nn.Module):
         self.use_checkpoint = use_checkpoint
         self.norm = normalization(channels)
         self.qkv = conv_nd(dims, channels, channels * 3, 1)
-        self.attention_type = attention_type
-        if attention_type == "flash":
-            self.attention = QKVFlashAttention(channels, self.num_heads)
-        else:
-            # split heads before split qkv
-            self.attention = QKVAttentionLegacy(self.num_heads)
-
+        self.attention_type = "None"
+        self.attention = QKVAttentionLegacy(self.num_heads)
         self.use_attention_checkpoint = not (
             self.use_checkpoint or self.attention_type == "flash"
         )

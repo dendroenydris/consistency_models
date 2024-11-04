@@ -173,7 +173,8 @@ class TensorBoardOutputFormat(KVWriter):
             kwargs = {"tag": k, "simple_value": float(v)}
             return self.tf.Summary.Value(**kwargs)
 
-        summary = self.tf.Summary(value=[summary_val(k, v) for k, v in kvs.items()])
+        summary = self.tf.Summary(
+            value=[summary_val(k, v) for k, v in kvs.items()])
         event = self.event_pb2.Event(wall_time=time.time(), summary=summary)
         event.step = (
             self.step
@@ -330,7 +331,8 @@ def get_current():
 
 
 class Logger(object):
-    DEFAULT = None  # A logger with no output files. (See right below class definition)
+    # A logger with no output files. (See right below class definition)
+    DEFAULT = None
     # So that you can still log to the terminal without setting up any output files
     CURRENT = None  # Current logger being used by the free functions above
 
@@ -444,12 +446,13 @@ def configure(dir=None, format_strs=None, comm=None, log_suffix=""):
     If comm is provided, average all numerical stats across that comm
     """
     if dir is None:
-        dir = os.getenv("OPENAI_LOGDIR")
-    if dir is None:
-        dir = osp.join(
-            tempfile.gettempdir(),
-            datetime.datetime.now().strftime("openai-%Y-%m-%d-%H-%M-%S-%f"),
-        )
+        log("No pth_out")
+        exit(-1)
+    # if dir is None:
+    #     dir = osp.join(
+    #         tempfile.gettempdir(),
+    #         datetime.datetime.now().strftime("openai-%Y-%m-%d-%H-%M-%S-%f"),
+    #     )
     assert isinstance(dir, str)
     dir = os.path.expanduser(dir)
     os.makedirs(os.path.expanduser(dir), exist_ok=True)
@@ -460,11 +463,13 @@ def configure(dir=None, format_strs=None, comm=None, log_suffix=""):
 
     if format_strs is None:
         if rank == 0:
-            format_strs = os.getenv("OPENAI_LOG_FORMAT", "stdout,log,csv").split(",")
+            format_strs = os.getenv(
+                "OPENAI_LOG_FORMAT", "stdout,log,csv").split(",")
         else:
             format_strs = os.getenv("OPENAI_LOG_FORMAT_MPI", "log").split(",")
     format_strs = filter(None, format_strs)
-    output_formats = [make_output_format(f, dir, log_suffix) for f in format_strs]
+    output_formats = [make_output_format(
+        f, dir, log_suffix) for f in format_strs]
 
     Logger.CURRENT = Logger(dir=dir, output_formats=output_formats, comm=comm)
     if output_formats:
@@ -492,4 +497,3 @@ def scoped_configure(dir=None, format_strs=None, comm=None):
     finally:
         Logger.CURRENT.close()
         Logger.CURRENT = prevlogger
-

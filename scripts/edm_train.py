@@ -21,7 +21,7 @@ def main():
     args = create_argparser().parse_args()
 
     dist_util.setup_dist()
-    logger.configure()
+    logger.configure(dir=args.pth_out)
 
     logger.log("creating model and diffusion...")
     model, diffusion = create_model_and_diffusion(
@@ -71,6 +71,7 @@ def main():
 
 def create_argparser():
     defaults = dict(
+        pth_out="",
         data_dir="",
         schedule_sampler="uniform",
         lr=1e-4,
