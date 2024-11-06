@@ -69,7 +69,7 @@ if [ -f "$IN32_ZIP_PATH" ]; then
     export APPTAINER_BINDPATH="${APPTAINER_BINDPATH},${LOCAL_JOB_DIR}/data:/data/"
     
     # Check if /data/IN32_CM/train exists
-    if [ ! -d "$LOCAL_JOB_DIR/data/IN32_CM/train" ]; then
+    if [ ! -d "$LOCAL_JOB_DIR/data/IN-32_CM/train" ]; then
         echo "Error: /data/IN32_CM/train directory does not exist after unzipping."
         exit 1
     fi
