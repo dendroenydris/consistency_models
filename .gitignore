@@ -21,3 +21,8 @@ dist/
 *.DS_Store
 test.py
 wandb
+*.sif
+dataset/*
+model/*
+runs/*
+*.swp
