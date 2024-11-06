@@ -390,7 +390,7 @@ class CMTrainLoop(TrainLoop):
                     return
 
             if self.global_step % self.log_interval == 0:
-                logger.dumpkvs()
+                wandb.log(logger.dumpkvs() | {"step": self.global_step})
 
         # Save the last checkpoint if it wasn't already saved.
         if not saved:
