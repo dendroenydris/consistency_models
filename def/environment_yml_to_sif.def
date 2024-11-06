@@ -15,8 +15,6 @@ From: continuumio/miniconda3
     . /opt/conda/etc/profile.d/conda.sh
     conda env create -f environment.yml -p /opt/conda/envs/$ENV_NAME
     conda clean --all
-    conda activate $ENV_NAME
-    pip install git+https://github.com/dendroenydris/consistency_models.git
 
 %runscript
     exec "$@"
