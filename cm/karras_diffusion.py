@@ -344,7 +344,9 @@ class KarrasDenoiser:
                 for x in self.get_scalings_for_boundary_condition(sigmas)
             ]
         rescaled_t = 1000 * 0.25 * th.log(sigmas + 1e-44)
-        model_output = model(c_in * x_t, rescaled_t, **model_kwargs)
+        model_dtype = next(model.parameters()).dtype
+        model_output = model((c_in * x_t).to(model_dtype), (rescaled_t).to(model_dtype), **model_kwargs)
+        # model_output = model(c_in * x_t, rescaled_t, **model_kwargs)
         denoised = c_out * model_output + c_skip * x_t
         return model_output, denoised
 
