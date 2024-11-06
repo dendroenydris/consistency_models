@@ -70,12 +70,12 @@ if [ -f "$IN32_ZIP_PATH" ]; then
     
     # Check if /data/IN32_CM/train exists
     if [ ! -d "$LOCAL_JOB_DIR/data/IN-32_CM/train" ]; then
-        echo "Error: /data/IN32_CM/train directory does not exist after unzipping."
+        echo "Error: /data/IN-32_CM/train directory does not exist after unzipping."
         exit 1
     fi
     
     # Set dataset variable
-    cmd="$cmd $SCRIPT_DATASET_VARIABLE=/data/IN32_CM/train"
+    cmd="$cmd $SCRIPT_DATASET_VARIABLE=/data/IN-32_CM/train"
 else
     echo "IN32.zip not found in $LOCAL_DATASET_DIR"
     exit 1
