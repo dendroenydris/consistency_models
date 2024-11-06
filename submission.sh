@@ -34,7 +34,7 @@ APPTAINER_BINDPATH=".:/opt/code,./:/opt/submit,${LOCAL_JOB_DIR}/job_results:/opt
 # PYTHON COMMAND needs to be handed after the job-name (stored in $cmd), example call of this script:
 #       `sbatch ./submission.sh job_name python my_training.py resnet-50 MNIST --pretrained=True`
 # NOTE this script request your python-script to have a --path_out parameter
-cmd="${@:1} --path_out $OUTPUTPATH_JOB"
+cmd="${@:1} --pth_out $OUTPUTPATH_JOB"
 
 
 # information about environmental variables and other meta data
@@ -53,22 +53,47 @@ echo "__________________________________________________________________________
 
 
 # the variable the script expects for the path to the dataset
-SCRIPT_DATASET_VARIABLE="--dset_train"
+SCRIPT_DATASET_VARIABLE="--data_dir"
 # path to where the dataset is stored locally on this cluster-node
 LOCAL_DATASET_DIR="dataset"
-# copying dataset (if provided)
-if [ -d $LOCAL_DATASET_DIR ];
-then
-    echo "copying dataset to $LOCAL_JOB_DIR/data"
-    mkdir $LOCAL_JOB_DIR/data
-    cp -r $LOCAL_DATASET_DIR $LOCAL_JOB_DIR/data/dataset
+
+IN32_ZIP_PATH="$LOCAL_DATASET_DIR/IN32.zip"
+if [ -f "$IN32_ZIP_PATH" ]; then
+    echo "Copying and unzipping dataset to $LOCAL_JOB_DIR/data"
+    mkdir -p "$LOCAL_JOB_DIR/data"
+    cp "$IN32_ZIP_PATH" "$LOCAL_JOB_DIR/data/"
+    unzip "$LOCAL_JOB_DIR/data/IN32.zip" -d "$LOCAL_JOB_DIR/data/"
+    # Confirm successful unzip
+    echo "Successfully unzipped dataset"
+    # Bind the unzipped data to /data
     export APPTAINER_BINDPATH="${APPTAINER_BINDPATH},${LOCAL_JOB_DIR}/data:/data/"
-    # setting dataset variable post-hoc
-    cmd="$cmd $SCRIPT_DATASET_VARIABLE=/data/dataset"
+    
+    # Check if /data/IN32_CM/train exists
+    if [ ! -d "$LOCAL_JOB_DIR/data/IN32_CM/train" ]; then
+        echo "Error: /data/IN32_CM/train directory does not exist after unzipping."
+        exit 1
+    fi
+    
+    # Set dataset variable
+    cmd="$cmd $SCRIPT_DATASET_VARIABLE=/data/IN32_CM/train"
+else
+    echo "IN32.zip not found in $LOCAL_DATASET_DIR"
+    exit 1
 fi
+
+# copying dataset (if provided)
+# if [ -d $LOCAL_DATASET_DIR ];
+# then
+#     echo "copying dataset to $LOCAL_JOB_DIR/data"
+#     mkdir $LOCAL_JOB_DIR/data
+#     cp -r $LOCAL_DATASET_DIR $LOCAL_JOB_DIR/data/dataset
+#     export APPTAINER_BINDPATH="${APPTAINER_BINDPATH},${LOCAL_JOB_DIR}/data:/data/"
+#     # setting dataset variable post-hoc
+#     cmd="$cmd $SCRIPT_DATASET_VARIABLE=/data/dataset"
+# fi
 export APPTAINER_BINDPATH="${APPTAINER_BINDPATH},$DATAPOOL1"
 # cd $SUBMIT_DIR
-
+echo "Successfully moving dataset"
 
 # running the python script
 echo "‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾"

@@ -446,7 +446,7 @@ def configure(dir=None, format_strs=None, comm=None, log_suffix=""):
     If comm is provided, average all numerical stats across that comm
     """
     if dir is None:
-        log("No pth_out")
+        print("No pth_out")
         exit(-1)
     # if dir is None:
     #     dir = osp.join(
