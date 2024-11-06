@@ -62,7 +62,7 @@ if [ -f "$IN32_ZIP_PATH" ]; then
     echo "Copying and unzipping dataset to $LOCAL_JOB_DIR/data"
     mkdir -p "$LOCAL_JOB_DIR/data"
     cp "$IN32_ZIP_PATH" "$LOCAL_JOB_DIR/data/"
-    unzip "$LOCAL_JOB_DIR/data/IN32.zip" -d "$LOCAL_JOB_DIR/data/"
+    unzip -q "$LOCAL_JOB_DIR/data/IN32.zip" -d "$LOCAL_JOB_DIR/data/"
     # Confirm successful unzip
     echo "Successfully unzipped dataset"
     # Bind the unzipped data to /data
