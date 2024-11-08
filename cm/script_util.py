@@ -134,11 +134,13 @@ def create_model(
         else:
             raise ValueError(f"unsupported image size: {image_size}")
     else:
-        channel_mult = tuple(int(ch_mult) for ch_mult in channel_mult.split(","))
+        channel_mult = tuple(int(ch_mult)
+                             for ch_mult in channel_mult.split(","))
 
     attention_ds = []
-    for res in attention_resolutions.split(","):
-        attention_ds.append(image_size // int(res))
+    if ((' ' not in attention_resolutions) and ('[' not in attention_resolutions)):
+        for res in attention_resolutions.split(","):
+            attention_ds.append(image_size // int(res))
 
     return UNetModel(
         image_size=image_size,
@@ -178,7 +180,8 @@ def create_ema_and_scales_fn(
             target_ema = start_ema
             scales = np.ceil(
                 np.sqrt(
-                    (step / total_steps) * ((end_scales + 1) ** 2 - start_scales**2)
+                    (step / total_steps) *
+                    ((end_scales + 1) ** 2 - start_scales**2)
                     + start_scales**2
                 )
                 - 1
@@ -189,7 +192,8 @@ def create_ema_and_scales_fn(
         elif target_ema_mode == "adaptive" and scale_mode == "progressive":
             scales = np.ceil(
                 np.sqrt(
-                    (step / total_steps) * ((end_scales + 1) ** 2 - start_scales**2)
+                    (step / total_steps) *
+                    ((end_scales + 1) ** 2 - start_scales**2)
                     + start_scales**2
                 )
                 - 1
