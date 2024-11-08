@@ -617,13 +617,13 @@ class UNetModel(nn.Module):
                 ch = int(mult * model_channels)
                 if ds in attention_resolutions:
                     layers.append(
-                        AttentionBlock(
-                            ch,
-                            use_checkpoint=use_checkpoint,
-                            num_heads=num_heads,
-                            num_head_channels=num_head_channels,
-                            use_new_attention_order=use_new_attention_order,
-                        )
+                        # AttentionBlock(
+                        #     ch,
+                        #     use_checkpoint=use_checkpoint,
+                        #     num_heads=num_heads,
+                        #     num_head_channels=num_head_channels,
+                        #     use_new_attention_order=use_new_attention_order,
+                        # )
                     )
                 self.input_blocks.append(TimestepEmbedSequential(*layers))
                 self._feature_size += ch
@@ -662,13 +662,13 @@ class UNetModel(nn.Module):
                 use_checkpoint=use_checkpoint,
                 use_scale_shift_norm=use_scale_shift_norm,
             ),
-            AttentionBlock(
-                ch,
-                use_checkpoint=use_checkpoint,
-                num_heads=num_heads,
-                num_head_channels=num_head_channels,
-                use_new_attention_order=use_new_attention_order,
-            ),
+            # AttentionBlock(
+            #     ch,
+            #     use_checkpoint=use_checkpoint,
+            #     num_heads=num_heads,
+            #     num_head_channels=num_head_channels,
+            #     use_new_attention_order=use_new_attention_order,
+            # ),
             ResBlock(
                 ch,
                 time_embed_dim,
@@ -698,13 +698,13 @@ class UNetModel(nn.Module):
                 ch = int(model_channels * mult)
                 if ds in attention_resolutions:
                     layers.append(
-                        AttentionBlock(
-                            ch,
-                            use_checkpoint=use_checkpoint,
-                            num_heads=num_heads_upsample,
-                            num_head_channels=num_head_channels,
-                            use_new_attention_order=use_new_attention_order,
-                        )
+                        # AttentionBlock(
+                        #     ch,
+                        #     use_checkpoint=use_checkpoint,
+                        #     num_heads=num_heads_upsample,
+                        #     num_head_channels=num_head_channels,
+                        #     use_new_attention_order=use_new_attention_order,
+                        # )
                     )
                 if level and i == num_res_blocks:
                     out_ch = ch
