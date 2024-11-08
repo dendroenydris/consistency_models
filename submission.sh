@@ -35,11 +35,6 @@ APPTAINER_BINDPATH=".:/opt/code,./:/opt/submit,${LOCAL_JOB_DIR}/job_results:/opt
 #       `sbatch ./submission.sh job_name python my_training.py resnet-50 MNIST --pretrained=True`
 # NOTE this script request your python-script to have a --path_out parameter
 cmd="${@:1} --pth_out $OUTPUTPATH_JOB"
-cmd2="conda activate cm && \
-git clone https://github.com/dendroenydris/consistency_models.git && \
-cd consistency_models && \
-pip install -e . && \
-cd .."
 
 # information about environmental variables and other meta data
 echo "‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾"
@@ -100,11 +95,17 @@ export APPTAINER_BINDPATH="${APPTAINER_BINDPATH},$DATAPOOL1"
 echo "Successfully moving dataset"
 
 echo "‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾"
-echo "Running Python-Command: $cmd2"
+echo "Running Command: $cmd2"
 echo "――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――"
-apptainer exec --nv def/environment_image.sif $cmd2
 
 # running the python script
+cmd2="pip install -e git+https://github.com/dendroenydris/consistency_models.git#egg=consistency_models"
+apptainer exec --nv def/environment_image.sif $cmd2
+
+echo "‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾"
+echo "Completed Command: $cmd2"
+echo "――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――"
+
 echo "‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾"
 echo "Running Python-Command: $cmd"
 echo "――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――"
