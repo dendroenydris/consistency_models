@@ -210,12 +210,11 @@ class TrainLoop:
                 t,
                 model_kwargs=micro_cond,
             )
-            with autocast():
-                if last_batch or not self.use_ddp:
+            if last_batch or not self.use_ddp:
+                losses = compute_losses()
+            else:
+                with self.ddp_model.no_sync():
                     losses = compute_losses()
-                else:
-                    with self.ddp_model.no_sync():
-                        losses = compute_losses()
 
             if isinstance(self.schedule_sampler, LossAwareSampler):
                 self.schedule_sampler.update_with_local_losses(
@@ -508,12 +507,12 @@ class CMTrainLoop(TrainLoop):
                 )
             else:
                 raise ValueError(f"Unknown training mode {self.training_mode}")
-            with autocast():
-                if last_batch or not self.use_ddp:
+
+            if last_batch or not self.use_ddp:
+                losses = compute_losses()
+            else:
+                with self.ddp_model.no_sync():
                     losses = compute_losses()
-                else:
-                    with self.ddp_model.no_sync():
-                        losses = compute_losses()
 
             if isinstance(self.schedule_sampler, LossAwareSampler):
                 self.schedule_sampler.update_with_local_losses(
