@@ -541,6 +541,7 @@ class UNetModel(nn.Module):
                                     increased efficiency.
     """
 
+
     def __init__(
         self,
         image_size,
