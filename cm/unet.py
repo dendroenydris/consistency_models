@@ -616,15 +616,15 @@ class UNetModel(nn.Module):
                 ]
                 ch = int(mult * model_channels)
                 if ds in attention_resolutions:
-                    # layers.append(
-                    #     AttentionBlock(
-                    #         ch,
-                    #         use_checkpoint=use_checkpoint,
-                    #         num_heads=num_heads,
-                    #         num_head_channels=num_head_channels,
-                    #         use_new_attention_order=use_new_attention_order,
-                    #     )
-                    # )
+                    layers.append(
+                        # AttentionBlock(
+                        #     ch,
+                        #     use_checkpoint=use_checkpoint,
+                        #     num_heads=num_heads,
+                        #     num_head_channels=num_head_channels,
+                        #     use_new_attention_order=use_new_attention_order,
+                        # )
+                    )
                 self.input_blocks.append(TimestepEmbedSequential(*layers))
                 self._feature_size += ch
                 input_block_chans.append(ch)
