@@ -18,6 +18,7 @@ from cm.script_util import (
     create_ema_and_scales_fn,
 )
 from cm.train_util import CMTrainLoop
+from cm.in32_data import load_dataset
 import torch.distributed as dist
 import copy
 
@@ -74,6 +75,7 @@ def main():
         image_size=args.image_size,
         class_cond=args.class_cond,
     )
+    # data = load_dataset(args.data_dir)
 
     if len(args.teacher_model_path) > 0:  # path to the teacher score model.
         logger.log(f"loading the teacher model from {args.teacher_model_path}")
@@ -121,7 +123,7 @@ def main():
 
     if args.use_fp16:
         target_model.convert_to_fp16()
-        
+
     wandb.login(key="63ce76eebffb80b1165fb79e11d6dbb677cb7db6")
     wandb.init(
         project="consistency-model-training",

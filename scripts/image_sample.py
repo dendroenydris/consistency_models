@@ -10,7 +10,7 @@ import numpy as np
 import torch as th
 import torch.distributed as dist
 import wandb
-
+from torch.cuda.amp import autocast
 from cm import dist_util, logger
 from cm.script_util import (
     NUM_CLASSES,
@@ -25,7 +25,7 @@ from cm.karras_diffusion import karras_sample
 
 def main():
     args = create_argparser().parse_args()
-    
+
     dist_util.setup_dist()
     logger.configure(dir=args.pth_out)
 
@@ -65,25 +65,25 @@ def main():
                 low=0, high=NUM_CLASSES, size=(args.batch_size,), device=dist_util.dev()
             )
             model_kwargs["y"] = classes
-
-        sample = karras_sample(
-            diffusion,
-            model,
-            (args.batch_size, 3, args.image_size, args.image_size),
-            steps=args.steps,
-            model_kwargs=model_kwargs,
-            device=dist_util.dev(),
-            clip_denoised=args.clip_denoised,
-            sampler=args.sampler,
-            sigma_min=args.sigma_min,
-            sigma_max=args.sigma_max,
-            s_churn=args.s_churn,
-            s_tmin=args.s_tmin,
-            s_tmax=args.s_tmax,
-            s_noise=args.s_noise,
-            generator=generator,
-            ts=ts,
-        )
+        with autocast():
+            sample = karras_sample(
+                diffusion,
+                model,
+                (args.batch_size, 3, args.image_size, args.image_size),
+                steps=args.steps,
+                model_kwargs=model_kwargs,
+                device=dist_util.dev(),
+                clip_denoised=args.clip_denoised,
+                sampler=args.sampler,
+                sigma_min=args.sigma_min,
+                sigma_max=args.sigma_max,
+                s_churn=args.s_churn,
+                s_tmin=args.s_tmin,
+                s_tmax=args.s_tmax,
+                s_noise=args.s_noise,
+                generator=generator,
+                ts=ts,
+            )
         sample = ((sample + 1) * 127.5).clamp(0, 255).to(th.uint8)
         sample = sample.permute(0, 2, 3, 1)
         sample = sample.contiguous()
