@@ -8,6 +8,15 @@ import socket
 import blobfile as bf
 import torch as th
 import torch.distributed as dist
+import socket
+from functools import partial
+import os
+import torch
+from torch.distributed import init_process_group
+from torch.nn.parallel import DistributedDataParallel as DDP
+from torch.utils.data.distributed import DistributedSampler
+from torch.utils.data import Dataset, DataLoader
+import torch.multiprocessing as mp
 
 # The GPU for a given rank is (rank % GPUS_PER_NODE).
 GPUS_PER_NODE = 8
@@ -36,7 +45,41 @@ def setup_dist():
     os.environ["CUDA_VISIBLE_DEVICES"] = str(local_rank)
 
     backend = "gloo" if not th.cuda.is_available() else "nccl"
-    dist.init_process_group(backend=backend, init_method="env://")
+    init_process_group(backend=backend, rank=rank, world_size=world_size)
+    torch.cuda.set_device(rank)
+
+
+def wrap_model(model):
+    """
+    Args:
+        model: a torch.nn.Module
+        rank: the rank of the DDP training process for that model
+    Returns:
+        a copy of that model on the device dedicated to the process rank
+    """
+    rank= int(os.environ["SLURM_PROCID"])
+    model = DDP(model.to(rank), device_ids=[rank], output_device=rank)
+    return model
+
+
+def get_dataloader(dset, seed=42, micro_batch_size=1,  **kwargs):
+    """
+    Args:
+        dset: a torch.utils.data.Dataset
+        world_size: Total number of processes
+        rank: Unique identifier of each process
+        seed: random seed for reproducibility
+              (choose a large number with balanced bits, such as 42, it's the answer to the universe, and everything)
+        micro_batch_size: the batch size of the dataloader (not necessarily the global batch size for optimization)
+        **kwargs: placeholder for duck-typing
+    Returns:
+        A distributed dataloader, that distributes samples to the respective process rank
+    """
+    world_size = int(os.environ["SLURM_NTASKS"])
+    rank = int(os.environ["SLURM_PROCID"])
+    sampler = DistributedSampler(
+        dset, num_replicas=world_size, rank=rank, shuffle=True, seed=seed, drop_last=False)
+    return DataLoader(dset, batch_size=micro_batch_size, sampler=sampler)
 
 
 def dev():
@@ -61,7 +104,7 @@ def load_state_dict(path, **kwargs):
             num_chunks += 1
         dist.broadcast_object_list([num_chunks])
         for i in range(0, len(data), 2**30):
-            dist.broadcast_object_list([data[i : i + 2**30]])
+            dist.broadcast_object_list([data[i: i + 2**30]])
     else:
         num_chunks = dist.broadcast_object_list([None])[0]
         data = bytearray()
@@ -87,7 +130,7 @@ def _find_free_port():
     """
     try:
         s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        s.bind(("", 0))
+        s.bind(('', 0))
         s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         return s.getsockname()[1]
     finally:
