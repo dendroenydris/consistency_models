@@ -5,40 +5,37 @@ Helpers for distributed training.
 import io
 import os
 import socket
-
 import blobfile as bf
-from mpi4py import MPI
 import torch as th
 import torch.distributed as dist
 
-# Change this to reflect your cluster layout.
 # The GPU for a given rank is (rank % GPUS_PER_NODE).
 GPUS_PER_NODE = 8
-
 SETUP_RETRY_COUNT = 3
 
 
 def setup_dist():
     """
-    Setup a distributed process group.
+    Setup a distributed process group using SLURM environment variables.
     """
     if dist.is_initialized():
         return
-    os.environ["CUDA_VISIBLE_DEVICES"] = f"{MPI.COMM_WORLD.Get_rank() % GPUS_PER_NODE}"
 
-    comm = MPI.COMM_WORLD
+    # SLURM-specific environment variables
+    rank = int(os.environ["SLURM_PROCID"])
+    world_size = int(os.environ["SLURM_NTASKS"])
+    local_rank = int(os.environ["SLURM_LOCALID"])
+    master_addr = os.environ["SLURM_NODELIST"].split(",")[0]
+    master_port = _find_free_port()
+
+    # Configure PyTorch distributed
+    os.environ["RANK"] = str(rank)
+    os.environ["WORLD_SIZE"] = str(world_size)
+    os.environ["MASTER_ADDR"] = master_addr
+    os.environ["MASTER_PORT"] = str(master_port)
+    os.environ["CUDA_VISIBLE_DEVICES"] = str(local_rank)
+
     backend = "gloo" if not th.cuda.is_available() else "nccl"
-
-    if backend == "gloo":
-        hostname = "localhost"
-    else:
-        hostname = socket.gethostbyname(socket.getfqdn())
-    os.environ["MASTER_ADDR"] = comm.bcast(hostname, root=0)
-    os.environ["RANK"] = str(comm.rank)
-    os.environ["WORLD_SIZE"] = str(comm.size)
-
-    port = comm.bcast(_find_free_port(), root=0)
-    os.environ["MASTER_PORT"] = str(port)
     dist.init_process_group(backend=backend, init_method="env://")
 
 
@@ -53,23 +50,24 @@ def dev():
 
 def load_state_dict(path, **kwargs):
     """
-    Load a PyTorch file without redundant fetches across MPI ranks.
+    Load a PyTorch file without redundant fetches across ranks.
     """
-    chunk_size = 2**30  # MPI has a relatively small size limit
-    if MPI.COMM_WORLD.Get_rank() == 0:
+    rank = dist.get_rank()
+    if rank == 0:
         with bf.BlobFile(path, "rb") as f:
             data = f.read()
-        num_chunks = len(data) // chunk_size
-        if len(data) % chunk_size:
+        num_chunks = len(data) // (2**30)
+        if len(data) % (2**30):
             num_chunks += 1
-        MPI.COMM_WORLD.bcast(num_chunks)
-        for i in range(0, len(data), chunk_size):
-            MPI.COMM_WORLD.bcast(data[i : i + chunk_size])
+        dist.broadcast_object_list([num_chunks])
+        for i in range(0, len(data), 2**30):
+            dist.broadcast_object_list([data[i : i + 2**30]])
     else:
-        num_chunks = MPI.COMM_WORLD.bcast(None)
-        data = bytes()
+        num_chunks = dist.broadcast_object_list([None])[0]
+        data = bytearray()
         for _ in range(num_chunks):
-            data += MPI.COMM_WORLD.bcast(None)
+            data_chunk = dist.broadcast_object_list([None])[0]
+            data.extend(data_chunk)
 
     return th.load(io.BytesIO(data), **kwargs)
 
@@ -84,6 +82,9 @@ def sync_params(params):
 
 
 def _find_free_port():
+    """
+    Find an available port for communication.
+    """
     try:
         s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         s.bind(("", 0))

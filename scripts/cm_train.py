@@ -4,6 +4,7 @@ Train a diffusion model on images.
 
 import argparse
 
+import torch
 import wandb
 
 from cm import dist_util, logger
@@ -52,6 +53,7 @@ def main():
     model_and_diffusion_kwargs["distillation"] = distillation
     model, diffusion = create_model_and_diffusion(**model_and_diffusion_kwargs)
     model.to(dist_util.dev())
+    model = torch.nn.parallel.DistributedDataParallel(model, device_ids=[torch.cuda.current_device()])
     model.train()
     if args.use_fp16:
         model.convert_to_fp16()
@@ -69,13 +71,13 @@ def main():
     else:
         batch_size = args.batch_size
 
-    data = load_data(
-        data_dir=args.data_dir,
-        batch_size=batch_size,
-        image_size=args.image_size,
-        class_cond=args.class_cond,
-    )
-    # data = load_dataset(args.data_dir)
+    # data = load_data(
+    #     data_dir=args.data_dir,
+    #     batch_size=batch_size,
+    #     image_size=args.image_size,
+    #     class_cond=args.class_cond,
+    # )
+    data = load_dataset(args.data_dir)
 
     if len(args.teacher_model_path) > 0:  # path to the teacher score model.
         logger.log(f"loading the teacher model from {args.teacher_model_path}")
