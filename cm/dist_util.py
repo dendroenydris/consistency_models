@@ -18,14 +18,14 @@ from torch.utils.data.distributed import DistributedSampler
 from torch.utils.data import Dataset, DataLoader
 import torch.multiprocessing as mp
 
-# The GPU for a given rank is (rank % GPUS_PER_NODE).
+# rank % GPUS_PER_NODE
 GPUS_PER_NODE = 8
 SETUP_RETRY_COUNT = 3
 
 
 def setup_dist():
     """
-    Setup a distributed process group using SLURM environment variables.
+    Setup a distributed process group
     """
     if dist.is_initialized():
         return
@@ -75,8 +75,8 @@ def get_dataloader(dset, seed=42, micro_batch_size=1,  **kwargs):
     Returns:
         A distributed dataloader, that distributes samples to the respective process rank
     """
-    world_size = int(os.environ["SLURM_NTASKS"])
-    rank = int(os.environ["SLURM_PROCID"])
+    rank = int(os.getenv("SLURM_PROCID", 0))
+    world_size = int(os.getenv("SLURM_NTASKS", 1))
     sampler = DistributedSampler(
         dset, num_replicas=world_size, rank=rank, shuffle=True, seed=seed, drop_last=False)
     return DataLoader(dset, batch_size=micro_batch_size, sampler=sampler)

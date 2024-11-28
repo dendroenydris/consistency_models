@@ -5,7 +5,7 @@
 #SBATCH --nodes=1
 #SBATCH --cpus-per-task=8
 #SBATCH --gpus=2
-#SBATCH --mem=64G
+#SBATCH --mem=32G
 #SBATCH --gpus-per-task=1
 #SBATCH --partition=gpu
 
@@ -96,6 +96,7 @@ apptainer exec --nv def/environment_image.sif $cmd2
 echo "‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾"
 echo "Completed Command: $cmd2"
 echo "――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――"
+
 # Log metadata
 echo "SLURM Job ID: $SLURM_JOB_ID"
 echo "Master Node: $MASTER_ADDR"
@@ -125,6 +126,7 @@ echo "__________________________________________________________________________
 mkdir -p $OUTPUTPATH_LOCAL
 cp -r ${LOCAL_JOB_DIR}/job_results/* $OUTPUTPATH_LOCAL
 rm -r ${LOCAL_JOB_DIR}/job_results
+
 # also copy output
 cp "${SUBMIT_DIR}/runs/${SLURM_JOB_ID}_${SLURM_JOB_NAME}.out" "${SUBMIT_DIR}/runs/${SLURM_JOB_ID}"
 
