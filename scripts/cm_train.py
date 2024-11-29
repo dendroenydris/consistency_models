@@ -83,7 +83,7 @@ def main():
         class_cond=args.class_cond,
     )
     # data = load_dataset(args.data_dir)
-    data = dist_util.get_dataloader(data)
+    # data = dist_util.get_dataloader(data)
 
     if len(args.teacher_model_path) > 0:  # path to the teacher score model.
         logger.log(f"loading the teacher model from {args.teacher_model_path}")
