@@ -54,11 +54,10 @@ def main():
     model_and_diffusion_kwargs["distillation"] = distillation
     model, diffusion = create_model_and_diffusion(**model_and_diffusion_kwargs)
     model.to(dist_util.dev())
-    model = dist_util.wrap_model(model)
     model.train()
     if args.use_fp16:
         model.convert_to_fp16()
-
+    model = dist_util.wrap_model(model)
     schedule_sampler = create_named_schedule_sampler(
         args.schedule_sampler, diffusion)
 
