@@ -62,7 +62,7 @@ def main():
     if args.use_fp16:
         model.convert_to_fp16()
         
-    model = dist_util.wrap_model(model)
+    # model = dist_util.wrap_model(model)
 
     schedule_sampler = create_named_schedule_sampler(
         args.schedule_sampler, diffusion)
