@@ -1,4 +1,5 @@
 import math
+import os
 import random
 
 from PIL import Image
@@ -50,8 +51,8 @@ def load_data(
         image_size,
         all_files,
         classes=classes,
-        shard=MPI.COMM_WORLD.Get_rank(),
-        num_shards=MPI.COMM_WORLD.Get_size(),
+        shard=int(os.environ["SLURM_LOCALID"]),
+        num_shards=int(os.environ["SLURM_NTASKS"]),
         random_crop=random_crop,
         random_flip=random_flip,
     )
@@ -140,13 +141,14 @@ def center_crop_arr(pil_image, image_size):
     arr = np.array(pil_image)
     crop_y = (arr.shape[0] - image_size) // 2
     crop_x = (arr.shape[1] - image_size) // 2
-    return arr[crop_y : crop_y + image_size, crop_x : crop_x + image_size]
+    return arr[crop_y: crop_y + image_size, crop_x: crop_x + image_size]
 
 
 def random_crop_arr(pil_image, image_size, min_crop_frac=0.8, max_crop_frac=1.0):
     min_smaller_dim_size = math.ceil(image_size / max_crop_frac)
     max_smaller_dim_size = math.ceil(image_size / min_crop_frac)
-    smaller_dim_size = random.randrange(min_smaller_dim_size, max_smaller_dim_size + 1)
+    smaller_dim_size = random.randrange(
+        min_smaller_dim_size, max_smaller_dim_size + 1)
 
     # We are not on a new enough PIL to support the `reducing_gap`
     # argument, which uses BOX downsampling at powers of two first.
@@ -164,4 +166,4 @@ def random_crop_arr(pil_image, image_size, min_crop_frac=0.8, max_crop_frac=1.0)
     arr = np.array(pil_image)
     crop_y = random.randrange(arr.shape[0] - image_size + 1)
     crop_x = random.randrange(arr.shape[1] - image_size + 1)
-    return arr[crop_y : crop_y + image_size, crop_x : crop_x + image_size]
+    return arr[crop_y: crop_y + image_size, crop_x: crop_x + image_size]
