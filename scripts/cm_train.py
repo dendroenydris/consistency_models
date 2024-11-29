@@ -211,7 +211,7 @@ def save_images(dataset, output_dir, image_size=32):
     print(f"Data saved in '{output_dir}'.")
 
 
-def save_dataset(image_size=32, base_dir="./dataset/MNIST"):
+def save_dataset(image_size=32, data_dir="./dataset/MNIST"):
     """
     Saves the MNIST training and validation datasets into the specified directory.
     """
@@ -231,7 +231,7 @@ def save_dataset(image_size=32, base_dir="./dataset/MNIST"):
     #     root="./data", train=False, download=True, transform=transform)
 
     # Save the datasets
-    save_images(train_dataset, output_dir=base_dir, image_size=image_size)
+    save_images(train_dataset, output_dir=data_dir, image_size=image_size)
     # save_images(val_dataset, output_dir=val_dir, image_size=image_size)
 
 
