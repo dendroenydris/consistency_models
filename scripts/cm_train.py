@@ -33,7 +33,7 @@ def main():
     dist_util.setup_dist()
     logger.configure(dir=args.pth_out)
 
-    save_dataset(image_size=32, data_dir=args.data_dir, image_size=args.image_size)
+    save_dataset(data_dir=args.data_dir, image_size=args.image_size)
 
     logger.log("creating model and diffusion...")
     ema_scale_fn = create_ema_and_scales_fn(
