@@ -51,8 +51,8 @@ def load_data(
         image_size,
         all_files,
         classes=classes,
-        shard=int(os.environ["SLURM_LOCALID"]),
-        num_shards=int(os.environ["SLURM_NTASKS"]),
+        shard=MPI.COMM_WORLD.Get_rank(),
+        num_shards=MPI.COMM_WORLD.Get_size(),
         random_crop=random_crop,
         random_flip=random_flip,
     )
