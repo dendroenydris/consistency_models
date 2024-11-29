@@ -44,7 +44,8 @@ def setup_dist():
     os.environ["MASTER_PORT"] = str(master_port)
     os.environ["CUDA_VISIBLE_DEVICES"] = str(local_rank)
 
-    backend = "gloo" if not th.cuda.is_available() else "nccl"
+    backend = "gloo"
+    # backend = "gloo" if not th.cuda.is_available() else "nccl"
     init_process_group(backend=backend, rank=rank, world_size=world_size)
     torch.cuda.set_device(rank)
 
