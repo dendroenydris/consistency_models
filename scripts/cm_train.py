@@ -70,10 +70,7 @@ def main():
     if args.batch_size == -1:
         batch_size = args.global_batch_size // dist.get_world_size()
         if args.global_batch_size % dist.get_world_size() != 0:
-            logger.log(
-                f"warning, using smaller global_batch_size of {
-                    dist.get_world_size()*batch_size} instead of {args.global_batch_size}"
-            )
+            logger.log(f"warning, using smaller global_batch_size of { dist.get_world_size()*batch_size} instead of {args.global_batch_size}")
     else:
         batch_size = args.batch_size
 
