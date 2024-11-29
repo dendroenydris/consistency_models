@@ -41,7 +41,15 @@ APPTAINER_BINDPATH=".:/opt/code,./:/opt/submit,${LOCAL_JOB_DIR}/job_results:/opt
 # PYTHON COMMAND needs to be handed after the job-name (stored in $cmd), example call of this script:
 #       `sbatch ./submission.sh job_name python my_training.py resnet-50 MNIST --pretrained=True`
 # NOTE this script request your python-script to have a --path_out parameter
-cmd="${@:1} --pth_out $OUTPUTPATH_JOB"
+# cmd="${@:1} --pth_out $OUTPUTPATH_JOB"
+
+cmd="srun -m torch.distributed.launch \
+    --nproc_per_node=$SLURM_GPUS_PER_NODE \
+    --nnodes=$SLURM_NNODES \
+    --node_rank=$SLURM_NODEID \
+    --master_addr=$MASTER_ADDR \
+    --master_port=$MASTER_PORT \
+    ${@:1} --pth_out $OUTPUTPATH_JOB"
 
 # information about environmental variables and other meta data
 echo "‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾"
@@ -104,14 +112,6 @@ echo "Master Port: $MASTER_PORT"
 echo "World Size: $WORLD_SIZE"
 echo "Local Rank: $LOCAL_RANK"
 echo "Rank: $RANK"
-
-cmd="srun -m torch.distributed.launch \
-    --nproc_per_node=$SLURM_GPUS_PER_NODE \
-    --nnodes=$SLURM_NNODES \
-    --node_rank=$SLURM_NODEID \
-    --master_addr=$MASTER_ADDR \
-    --master_port=$MASTER_PORT \
-    ${@:1} --pth_out $OUTPUTPATH_JOB"
 
 echo "‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾"
 echo "Running Python-Command: $cmd"
