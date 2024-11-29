@@ -1,4 +1,5 @@
 import math
+import os
 import random
 
 from PIL import Image
@@ -50,8 +51,8 @@ def load_data(
         image_size,
         all_files,
         classes=classes,
-        shard=MPI.COMM_WORLD.Get_rank(),
-        num_shards=MPI.COMM_WORLD.Get_size(),
+        shard=int(os.environ["SLURM_LOCALID"]),
+        num_shards=int(os.environ["SLURM_NTASKS"]),
         random_crop=random_crop,
         random_flip=random_flip,
     )

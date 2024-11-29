@@ -2,6 +2,8 @@
 Train a diffusion model on images.
 """
 
+from PIL import Image
+from torchvision import datasets, transforms
 import argparse
 import os
 
@@ -30,6 +32,8 @@ def main():
 
     dist_util.setup_dist()
     logger.configure(dir=args.pth_out)
+
+    save_dataset(image_size=32, data_dir=args.data_dir, image_size=args.image_size)
 
     logger.log("creating model and diffusion...")
     ema_scale_fn = create_ema_and_scales_fn(
@@ -67,18 +71,19 @@ def main():
         batch_size = args.global_batch_size // dist.get_world_size()
         if args.global_batch_size % dist.get_world_size() != 0:
             logger.log(
-                f"warning, using smaller global_batch_size of {dist.get_world_size()*batch_size} instead of {args.global_batch_size}"
+                f"warning, using smaller global_batch_size of {
+                    dist.get_world_size()*batch_size} instead of {args.global_batch_size}"
             )
     else:
         batch_size = args.batch_size
 
-    # data = load_data(
-    #     data_dir=args.data_dir,
-    #     batch_size=batch_size,
-    #     image_size=args.image_size,
-    #     class_cond=args.class_cond,
-    # )
-    data = load_dataset(args.data_dir)
+    data = load_data(
+        data_dir=args.data_dir,
+        batch_size=batch_size,
+        image_size=args.image_size,
+        class_cond=args.class_cond,
+    )
+    # data = load_dataset(args.data_dir)
     data = dist_util.get_dataloader(data)
 
     if len(args.teacher_model_path) > 0:  # path to the teacher score model.
@@ -188,6 +193,48 @@ def create_argparser():
     parser = argparse.ArgumentParser()
     add_dict_to_argparser(parser, defaults)
     return parser
+
+
+def save_images(dataset, output_dir, image_size=32):
+    """
+    Saves a dataset's images into a specified directory.
+    Images are resized to the given size.
+    """
+    for idx, (image, label) in enumerate(dataset):
+        # Resize the image
+        image = transforms.ToPILImage()(image)
+        image = image.resize((image_size, image_size),
+                             Image.Resampling.LANCZOS)
+
+        # Save the image as PNG with label and index in filename
+        image_path = os.path.join(output_dir, f"label_{label}_image_{idx}.png")
+        image.save(image_path, format="PNG")
+
+    print(f"Data saved in '{output_dir}'.")
+
+
+def save_dataset(image_size=32, base_dir="./dataset/MNIST"):
+    """
+    Saves the MNIST training and validation datasets into the specified directory.
+    """
+    # Define the train and validation directories
+    train_dir = os.path.join(base_dir, "train")
+    val_dir = os.path.join(base_dir, "val")
+
+    # Create the directories if they don't exist
+    os.makedirs(train_dir, exist_ok=True)
+    os.makedirs(val_dir, exist_ok=True)
+
+    # Download and load the MNIST datasets
+    transform = transforms.ToTensor()
+    train_dataset = datasets.MNIST(
+        root="./data", train=True, download=True, transform=transform)
+    val_dataset = datasets.MNIST(
+        root="./data", train=False, download=True, transform=transform)
+
+    # Save the datasets
+    save_images(train_dataset, output_dir=train_dir, image_size=image_size)
+    save_images(val_dataset, output_dir=val_dir, image_size=image_size)
 
 
 if __name__ == "__main__":

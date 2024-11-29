@@ -57,39 +57,40 @@ SCRIPT_DATASET_VARIABLE="--data_dir"
 LOCAL_DATASET_DIR="dataset"
 
 IN32_ZIP_PATH="$LOCAL_DATASET_DIR/IN32.zip"
-if [ -f "$IN32_ZIP_PATH" ]; then
-    echo "Copying and unzipping dataset to $LOCAL_JOB_DIR/data"
-    mkdir -p "$LOCAL_JOB_DIR/data"
-    cp "$IN32_ZIP_PATH" "$LOCAL_JOB_DIR/data/"
-    unzip -q "$LOCAL_JOB_DIR/data/IN32.zip" -d "$LOCAL_JOB_DIR/data/"
-    # Confirm successful unzip
-    echo "Successfully unzipped dataset"
-    # Bind the unzipped data to /data
-    export APPTAINER_BINDPATH="${APPTAINER_BINDPATH},${LOCAL_JOB_DIR}/data:/data/"
+# if [ -f "$IN32_ZIP_PATH" ]; then
+#     echo "Copying and unzipping dataset to $LOCAL_JOB_DIR/data"
+#     mkdir -p "$LOCAL_JOB_DIR/data"
+#     cp "$IN32_ZIP_PATH" "$LOCAL_JOB_DIR/data/"
+#     unzip -q "$LOCAL_JOB_DIR/data/IN32.zip" -d "$LOCAL_JOB_DIR/data/"
+#     # Confirm successful unzip
+#     echo "Successfully unzipped dataset"
+#     # Bind the unzipped data to /data
+#     export APPTAINER_BINDPATH="${APPTAINER_BINDPATH},${LOCAL_JOB_DIR}/data:/data/"
     
-    # Check if /data/IN32_CM/train exists
-    if [ ! -d "$LOCAL_JOB_DIR/data/IN-32_CM/train" ]; then
-        echo "Error: /data/IN-32_CM/train directory does not exist after unzipping."
-        exit 1
-    fi
+#     # Check if /data/IN32_CM/train exists
+#     if [ ! -d "$LOCAL_JOB_DIR/data/IN-32_CM/train" ]; then
+#         echo "Error: /data/IN-32_CM/train directory does not exist after unzipping."
+#         exit 1
+#     fi
     
-    # Set dataset variable
-    cmd="$cmd $SCRIPT_DATASET_VARIABLE=/data/IN-32_CM/train"
-else
-    echo "IN32.zip not found in $LOCAL_DATASET_DIR"
-    exit 1
-fi
+#     # Set dataset variable
+#     cmd="$cmd $SCRIPT_DATASET_VARIABLE=/data/IN-32_CM/train"
+# else
+#     echo "IN32.zip not found in $LOCAL_DATASET_DIR"
+#     exit 1
+# fi
 
 # copying dataset (if provided)
-# if [ -d $LOCAL_DATASET_DIR ];
-# then
-#     echo "copying dataset to $LOCAL_JOB_DIR/data"
-#     mkdir $LOCAL_JOB_DIR/data
-#     cp -r $LOCAL_DATASET_DIR $LOCAL_JOB_DIR/data/dataset
-#     export APPTAINER_BINDPATH="${APPTAINER_BINDPATH},${LOCAL_JOB_DIR}/data:/data/"
-#     # setting dataset variable post-hoc
-#     cmd="$cmd $SCRIPT_DATASET_VARIABLE=/data/dataset"
-# fi
+if [ -d $LOCAL_DATASET_DIR ];
+then
+    echo "copying dataset to $LOCAL_JOB_DIR/data"
+    mkdir $LOCAL_JOB_DIR/data
+    cp -r $LOCAL_DATASET_DIR $LOCAL_JOB_DIR/data/dataset
+    export APPTAINER_BINDPATH="${APPTAINER_BINDPATH},${LOCAL_JOB_DIR}/data:/data/"
+    # setting dataset variable post-hoc
+    cmd="$cmd $SCRIPT_DATASET_VARIABLE=/data/dataset/"
+fi
+
 export APPTAINER_BINDPATH="${APPTAINER_BINDPATH},$DATAPOOL1"
 # cd $SUBMIT_DIR
 echo "Successfully moving dataset"
@@ -98,8 +99,8 @@ echo "‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾�
 echo "Running Command: $cmd2"
 echo "――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――"
 
-# running the python script
-cmd2="pip install -e git+https://github.com/dendroenydris/consistency_models.git#egg=consistency_models"
+BRANCH_NAME="dn"
+cmd2="pip install -e git+https://github.com/dendroenydris/consistency_models.git@$BRANCH_NAME#egg=consistency_models"
 apptainer exec --nv def/environment_image.sif $cmd2
 
 echo "‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾"
