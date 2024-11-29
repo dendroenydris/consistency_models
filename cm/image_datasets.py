@@ -65,6 +65,19 @@ def load_data(
             dataset, batch_size=batch_size, shuffle=True, num_workers=16, drop_last=True
         )
     while True:
+        print(f"Batch size: {batch_size}, Num workers: 16, Drop last: True")
+
+        # Get the total number of image pairs
+        total_pairs = len(dataset)
+        print(f"Total number of image pairs: {total_pairs}")
+
+        # Extract and log the first two image pairs
+        for idx, (image, label) in enumerate(loader):
+            if idx < 2:
+                image_info = f"Image shape: {image.shape}, Label: {label}"
+                print(f"Image pair {idx + 1}: {image_info}")
+            else:
+                break
         yield from loader
 
 
