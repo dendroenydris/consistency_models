@@ -42,9 +42,7 @@ def load_data(
     all_files = _list_image_files_recursively(data_dir)
     classes = None
     if class_cond:
-        # Assume classes are the first part of the filename,
-        # before an underscore.
-        class_names = [bf.basename(path).split("_")[0] for path in all_files]
+        class_names = [os.path.basename(path).rsplit('_', 1)[-1].split('.')[0] for path in all_files]
         sorted_classes = {x: i for i, x in enumerate(sorted(set(class_names)))}
         classes = [sorted_classes[x] for x in class_names]
     dataset = ImageDataset(

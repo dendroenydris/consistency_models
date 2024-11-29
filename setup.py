@@ -19,5 +19,6 @@ setup(
         "mpi4py",
         "pillow",
         "wandb",
+        "torchvision"
     ],
 )

@@ -218,23 +218,23 @@ def save_dataset(image_size=32, base_dir="./dataset/MNIST"):
     Saves the MNIST training and validation datasets into the specified directory.
     """
     # Define the train and validation directories
-    train_dir = os.path.join(base_dir, "train")
-    val_dir = os.path.join(base_dir, "val")
+    # train_dir = os.path.join(base_dir, "train")
+    # val_dir = os.path.join(base_dir, "val")
 
     # Create the directories if they don't exist
-    os.makedirs(train_dir, exist_ok=True)
-    os.makedirs(val_dir, exist_ok=True)
+    # os.makedirs(train_dir, exist_ok=True)
+    # os.makedirs(val_dir, exist_ok=True)
 
     # Download and load the MNIST datasets
     transform = transforms.ToTensor()
     train_dataset = datasets.MNIST(
         root="./data", train=True, download=True, transform=transform)
-    val_dataset = datasets.MNIST(
-        root="./data", train=False, download=True, transform=transform)
+    # val_dataset = datasets.MNIST(
+    #     root="./data", train=False, download=True, transform=transform)
 
     # Save the datasets
-    save_images(train_dataset, output_dir=train_dir, image_size=image_size)
-    save_images(val_dataset, output_dir=val_dir, image_size=image_size)
+    save_images(train_dataset, output_dir=base_dir, image_size=image_size)
+    # save_images(val_dataset, output_dir=val_dir, image_size=image_size)
 
 
 if __name__ == "__main__":
