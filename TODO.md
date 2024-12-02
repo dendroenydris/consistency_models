@@ -1,0 +1,2 @@
+- [ ] check cmd srun
+- [ ] check with other dataloader
