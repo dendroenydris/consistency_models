@@ -70,13 +70,13 @@ def main():
     else:
         batch_size = args.batch_size
 
-    # data = load_data(
-    #     data_dir=args.data_dir,
-    #     batch_size=batch_size,
-    #     image_size=args.image_size,
-    #     class_cond=args.class_cond,
-    # )
-    data = load_dataset(args.data_dir)
+    data = load_data(
+        data_dir=args.data_dir,
+        batch_size=batch_size,
+        image_size=args.image_size,
+        class_cond=args.class_cond,
+    )
+    # data = load_dataset(args.data_dir)
     data = dist_util.get_dataloader(data)
 
     if len(args.teacher_model_path) > 0:  # path to the teacher score model.
