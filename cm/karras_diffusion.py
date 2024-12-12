@@ -1,6 +1,7 @@
 """
 Based on: https://github.com/crowsonkb/k-diffusion
 """
+import math
 import random
 
 import numpy as np
@@ -61,7 +62,8 @@ class KarrasDenoiser:
 
     def get_scalings(self, sigma):
         c_skip = self.sigma_data**2 / (sigma**2 + self.sigma_data**2)
-        c_out = sigma * self.sigma_data / (sigma**2 + self.sigma_data**2) ** 0.5
+        c_out = sigma * self.sigma_data / \
+            (sigma**2 + self.sigma_data**2) ** 0.5
         c_in = 1 / (sigma**2 + self.sigma_data**2) ** 0.5
         return c_skip, c_out, c_in
 
@@ -87,7 +89,8 @@ class KarrasDenoiser:
 
         dims = x_start.ndim
         x_t = x_start + noise * append_dims(sigmas, dims)
-        model_output, denoised = self.denoise(model, x_t, sigmas, **model_kwargs)
+        model_output, denoised = self.denoise(
+            model, x_t, sigmas, **model_kwargs)
 
         snrs = self.get_snr(sigmas)
         weights = append_dims(
@@ -171,9 +174,30 @@ class KarrasDenoiser:
 
             return samples
 
-        indices = th.randint(
-            0, num_scales - 1, (x_start.shape[0],), device=x_start.device
-        )
+        def sigma_fn(t, num_scales):
+            """variance schedule used througout CM"""
+            return self.sigma_max ** (1 / self.rho) + t / (num_scales - 1) * (
+                self.sigma_min ** (1 / self.rho) -
+                self.sigma_max ** (1 / self.rho)
+            )**self.rho
+
+        def measure(sig):
+            """sigma-measure for sigma_{i} and sigma_{i+1} from table 1"""
+            P_mean = -1.1
+            P_std = 2.0
+            return th.erf((th.log(sig) - P_mean) / (math.sqrt(2) * P_std))
+
+        # indices = th.randint(
+        #     0, num_scales - 1, (x_start.shape[0],), device=x_start.device
+        # )
+        # pre-calculating sigmas
+        _i = th.arange(0, num_scales) # note: 1 extra element for sigma_{i+1}
+        sigma_i = sigma_fn(_i, num_scales=num_scales)
+        # caclulating probabilities according to table 1
+        probs_unscaled = measure(sigma_i[1:]) - measure(sigma_i[:-1])
+        probs_scaled = probs_unscaled / probs_unscaled.sum()
+        # sampling the indices proporational to the difference of erfs defined in table 1
+        indices = th.from_numpy(np.random.choice(_i.numpy(), size=(x_start.shape[0],), p=probs_scaled.numpy())).to(x_start.device)
 
         t = self.sigma_max ** (1 / self.rho) + indices / (num_scales - 1) * (
             self.sigma_min ** (1 / self.rho) - self.sigma_max ** (1 / self.rho)
@@ -278,7 +302,8 @@ class KarrasDenoiser:
             )
             return denoiser
 
-        indices = th.randint(0, num_scales, (x_start.shape[0],), device=x_start.device)
+        indices = th.randint(
+            0, num_scales, (x_start.shape[0],), device=x_start.device)
 
         t = self.sigma_max ** (1 / self.rho) + indices / num_scales * (
             self.sigma_min ** (1 / self.rho) - self.sigma_max ** (1 / self.rho)
@@ -314,7 +339,8 @@ class KarrasDenoiser:
             loss = mean_flat(diffs) * weights
         elif self.loss_norm == "lpips":
             if x_start.shape[-1] < 256:
-                denoised_x = F.interpolate(denoised_x, size=224, mode="bilinear")
+                denoised_x = F.interpolate(
+                    denoised_x, size=224, mode="bilinear")
                 target_x = F.interpolate(target_x, size=224, mode="bilinear")
             loss = (
                 self.lpips_loss(
@@ -345,7 +371,8 @@ class KarrasDenoiser:
             ]
         rescaled_t = 1000 * 0.25 * th.log(sigmas + 1e-44)
         model_dtype = next(model.parameters()).dtype
-        model_output = model((c_in * x_t).to(model_dtype), (rescaled_t).to(model_dtype), **model_kwargs)
+        model_output = model((c_in * x_t).to(model_dtype),
+                             (rescaled_t).to(model_dtype), **model_kwargs)
         # model_output = model(c_in * x_t, rescaled_t, **model_kwargs)
         denoised = c_out * model_output + c_skip * x_t
         return model_output, denoised
@@ -376,9 +403,11 @@ def karras_sample(
         generator = get_generator("dummy")
 
     if sampler == "progdist":
-        sigmas = get_sigmas_karras(steps + 1, sigma_min, sigma_max, rho, device=device)
+        sigmas = get_sigmas_karras(
+            steps + 1, sigma_min, sigma_max, rho, device=device)
     else:
-        sigmas = get_sigmas_karras(steps, sigma_min, sigma_max, rho, device=device)
+        sigmas = get_sigmas_karras(
+            steps, sigma_min, sigma_max, rho, device=device)
 
     x_T = generator.randn(*shape, device=device) * sigma_max
 
@@ -631,7 +660,8 @@ def sample_dpm(
                 }
             )
         # Midpoint method, where the midpoint is chosen according to a rho=3 Karras schedule
-        sigma_mid = ((sigma_hat ** (1 / 3) + sigmas[i + 1] ** (1 / 3)) / 2) ** 3
+        sigma_mid = (
+            (sigma_hat ** (1 / 3) + sigmas[i + 1] ** (1 / 3)) / 2) ** 3
         dt_1 = sigma_mid - sigma_hat
         dt_2 = sigmas[i + 1] - sigma_hat
         x_2 = x + d * dt_1
@@ -676,7 +706,8 @@ def stochastic_iterative_sampler(
     for i in range(len(ts) - 1):
         t = (t_max_rho + ts[i] / (steps - 1) * (t_min_rho - t_max_rho)) ** rho
         x0 = distiller(x, t * s_in)
-        next_t = (t_max_rho + ts[i + 1] / (steps - 1) * (t_min_rho - t_max_rho)) ** rho
+        next_t = (t_max_rho + ts[i + 1] / (steps - 1)
+                  * (t_min_rho - t_max_rho)) ** rho
         next_t = np.clip(next_t, t_min, t_max)
         x = x0 + generator.randn_like(x) * np.sqrt(next_t**2 - t_min**2)
 
@@ -742,7 +773,8 @@ def iterative_colorization(
             matrix = -matrix
         return matrix
 
-    Q = th.from_numpy(obtain_orthogonal_matrix()).to(dist_util.dev()).to(th.float32)
+    Q = th.from_numpy(obtain_orthogonal_matrix()).to(
+        dist_util.dev()).to(th.float32)
     mask = th.zeros(*x.shape[1:], device=dist_util.dev())
     mask[0, ...] = 1.0
 
@@ -764,7 +796,8 @@ def iterative_colorization(
         x0 = distiller(x, t * s_in)
         x0 = th.clamp(x0, -1.0, 1.0)
         x0 = replacement(images, x0)
-        next_t = (t_max_rho + ts[i + 1] / (steps - 1) * (t_min_rho - t_max_rho)) ** rho
+        next_t = (t_max_rho + ts[i + 1] / (steps - 1)
+                  * (t_min_rho - t_max_rho)) ** rho
         next_t = np.clip(next_t, t_min, t_max)
         x = x0 + generator.randn_like(x) * np.sqrt(next_t**2 - t_min**2)
 
@@ -825,7 +858,8 @@ def iterative_inpainting(
         x0 = distiller(x, t * s_in)
         x0 = th.clamp(x0, -1.0, 1.0)
         x0 = replacement(images, x0)
-        next_t = (t_max_rho + ts[i + 1] / (steps - 1) * (t_min_rho - t_max_rho)) ** rho
+        next_t = (t_max_rho + ts[i + 1] / (steps - 1)
+                  * (t_min_rho - t_max_rho)) ** rho
         next_t = np.clip(next_t, t_min, t_max)
         x = x0 + generator.randn_like(x) * np.sqrt(next_t**2 - t_min**2)
 
@@ -856,7 +890,8 @@ def iterative_superres(
             matrix = -matrix
         return matrix
 
-    Q = th.from_numpy(obtain_orthogonal_matrix()).to(dist_util.dev()).to(th.float32)
+    Q = th.from_numpy(obtain_orthogonal_matrix()).to(
+        dist_util.dev()).to(th.float32)
 
     image_size = x.shape[-1]
 
@@ -945,7 +980,8 @@ def iterative_superres(
         x0 = distiller(x, t * s_in)
         x0 = th.clamp(x0, -1.0, 1.0)
         x0 = replacement(images, x0)
-        next_t = (t_max_rho + ts[i + 1] / (steps - 1) * (t_min_rho - t_max_rho)) ** rho
+        next_t = (t_max_rho + ts[i + 1] / (steps - 1)
+                  * (t_min_rho - t_max_rho)) ** rho
         next_t = np.clip(next_t, t_min, t_max)
         x = x0 + generator.randn_like(x) * np.sqrt(next_t**2 - t_min**2)
 
