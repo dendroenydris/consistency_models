@@ -99,7 +99,8 @@ echo "Running Command: $cmd2"
 echo "――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――"
 
 # running the python script
-cmd2="pip install -e git+https://github.com/dendroenydris/consistency_models.git#egg=consistency_models"
+BRANCH_NAME="add_changes"
+cmd2="pip install -e git+https://github.com/dendroenydris/consistency_models.git@$BRANCH_NAME#egg=consistency_models"
 apptainer exec --nv def/environment_image.sif $cmd2
 
 echo "‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾"
