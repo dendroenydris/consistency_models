@@ -1,4 +1,5 @@
 import argparse
+import math
 
 import torch
 
@@ -176,10 +177,10 @@ def create_ema_and_scales_fn(
 ):
     def ema_and_scales_fn(step):
         ema_rate = 0.0
-        s_0 = 10
-        s_1 = 1280
+        s_0 = start_scales  # 10
+        s_1 = end_scales  # 1280
         K = total_steps
-        K_ = int( K / (torch.log2(int(s_1/s_0)) + 1) )
+        K_ = int(K / (math.log2(int(s_1/s_0)) + 1))
         exponent = int(step / K_)
         N = min(s_0 * 2**exponent, s_1) + 1
         return ema_rate, N
