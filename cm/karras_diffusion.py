@@ -189,6 +189,7 @@ class KarrasDenoiser:
 
         dropout_state = th.get_rng_state()
         distiller = denoise_fn(x_t, t)
+        
 
         if teacher_model is None:
             x_t2 = euler_solver(x_t, t, t2, x_start).detach()
