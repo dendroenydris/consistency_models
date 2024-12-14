@@ -183,7 +183,7 @@ def create_ema_and_scales_fn(
         K_ = int(K / (math.log2(int(s_1/s_0)) + 1))
         exponent = int(step / K_)
         N = min(s_0 * 2**exponent, s_1) + 1
-        return ema_rate, N
+        return float(ema_rate), int(N)
     # if target_ema_mode == "fixed" and scale_mode == "fixed":
     # def ema_and_scales_fn(step):
     #     if target_ema_mode == "fixed" and scale_mode == "fixed":
