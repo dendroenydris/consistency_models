@@ -199,6 +199,9 @@ class KarrasDenoiser:
         # sampling the indices proporational to the difference of erfs defined in table 1
         indices = th.from_numpy(np.random.choice(_i.numpy(), size=(x_start.shape[0],), p=probs_scaled.numpy())).to(x_start.device)
 
+        indices = th.randint(
+            0, num_scales - 1, (x_start.shape[0],), device=x_start.device
+        )
         t = self.sigma_max ** (1 / self.rho) + indices / (num_scales - 1) * (
             self.sigma_min ** (1 / self.rho) - self.sigma_max ** (1 / self.rho)
         )
