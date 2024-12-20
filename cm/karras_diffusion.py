@@ -197,10 +197,10 @@ class KarrasDenoiser:
         probs_unscaled = measure(sigma_i[1:]) - measure(sigma_i[:-1])
         probs_scaled = probs_unscaled / probs_unscaled.sum()
         # prob
-        nan_indices = th.isnan(probs_scaled)
-        if nan_indices.any():
-            print("NaN probabilities found at the following indices:")
-            print(th.nonzero(nan_indices))
+        # nan_indices = th.isnan(probs_scaled)
+        # if nan_indices.any():
+        #     print("NaN probabilities found at the following indices:")
+        #     print(th.nonzero(nan_indices))
         # sampling the indices proporational to the difference of erfs defined in table 1
         probs_scaled[th.isnan(probs_scaled)] = 1e-8
         probs_scaled /= probs_scaled.sum()
