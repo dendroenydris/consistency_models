@@ -202,7 +202,8 @@ class KarrasDenoiser:
             print("NaN probabilities found at the following indices:")
             print(th.nonzero(nan_indices))
         # sampling the indices proporational to the difference of erfs defined in table 1
-        probs_scaled[th.isnan(probs_scaled)] = 0.0
+        probs_scaled[th.isnan(probs_scaled)] = 1e-8
+        probs_scaled /= probs_scaled.sum()
         
         indices = th.from_numpy(np.random.choice(_i[:-1].numpy(), size=(x_start.shape[0],), p=probs_scaled.numpy())).to(x_start.device)
 
