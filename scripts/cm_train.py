@@ -53,6 +53,7 @@ def main():
     )
     model_and_diffusion_kwargs["distillation"] = distillation
     model, diffusion = create_model_and_diffusion(**model_and_diffusion_kwargs)
+    
     model.to(dist_util.dev())
     model.train()
     if args.use_fp16:
@@ -117,6 +118,11 @@ def main():
     target_model.to(dist_util.dev())
     target_model.train()
 
+    model = dist_util.wrap_model(model)
+    target_model = dist_util.wrap_model(target_model)
+    if teacher_model:
+        teacher_model = dist_util.wrap_model(teacher_model)
+        
     dist_util.sync_params(target_model.parameters())
     dist_util.sync_params(target_model.buffers())
 

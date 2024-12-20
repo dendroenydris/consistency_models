@@ -19,7 +19,7 @@ from torch.utils.data import Dataset, DataLoader
 import torch.multiprocessing as mp
 
 # rank % GPUS_PER_NODE
-GPUS_PER_NODE = 8
+GPUS_PER_NODE = th.cuda.device_count()
 SETUP_RETRY_COUNT = 3
 
 
@@ -31,10 +31,13 @@ def setup_dist():
         return
 
     # SLURM-specific environment variables
-    rank = int(os.environ["SLURM_PROCID"])
-    world_size = int(os.environ["SLURM_NTASKS"])
-    local_rank = int(os.environ["SLURM_LOCALID"])
-    master_addr = os.environ["SLURM_NODELIST"].split(",")[0]
+    try:
+        rank = int(os.environ["SLURM_PROCID"])
+        world_size = int(os.environ["SLURM_NTASKS"])
+        local_rank = int(os.environ["SLURM_LOCALID"])
+        master_addr = os.environ["SLURM_NODELIST"].split(",")[0]
+    except KeyError as e:
+        raise RuntimeError(f"Missing SLURM environment variable: {e}")
     master_port = _find_free_port()
 
     # Configure PyTorch distributed
@@ -44,7 +47,7 @@ def setup_dist():
     os.environ["MASTER_PORT"] = str(master_port)
     os.environ["CUDA_VISIBLE_DEVICES"] = str(local_rank)
 
-    backend = "gloo"
+    backend = "nccl" if th.cuda.is_available() else "gloo"
     # backend = "gloo" if not th.cuda.is_available() else "nccl"
     init_process_group(backend=backend, rank=rank, world_size=world_size)
     torch.cuda.set_device(rank)

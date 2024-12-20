@@ -43,13 +43,13 @@ APPTAINER_BINDPATH=".:/opt/code,./:/opt/submit,${LOCAL_JOB_DIR}/job_results:/opt
 # NOTE this script request your python-script to have a --path_out parameter
 # cmd="${@:1} --pth_out $OUTPUTPATH_JOB"
 
-cmd="srun -m torch.distributed.launch \
-    --nproc_per_node=$SLURM_GPUS_PER_NODE \
-    --nnodes=$SLURM_NNODES \
-    --node_rank=$SLURM_NODEID \
-    --master_addr=$MASTER_ADDR \
-    --master_port=$MASTER_PORT \
-    ${@:1} --pth_out $OUTPUTPATH_JOB"
+cmd="torchrun \
+  --nproc_per_node=$SLURM_GPUS_PER_NODE \
+  --nnodes=$SLURM_NNODES \
+  --node_rank=$SLURM_NODEID \
+  --master_addr=$MASTER_ADDR \
+  --master_port=$MASTER_PORT \
+  ${@:1} --pth_out $OUTPUTPATH_JOB"
 
 # information about environmental variables and other meta data
 echo "‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾"
@@ -93,12 +93,12 @@ export APPTAINER_BINDPATH="${APPTAINER_BINDPATH},$DATAPOOL1"
 # cd $SUBMIT_DIR
 echo "Successfully moving dataset"
 
+# running the python script
+cmd2="pip install -e git+https://github.com/dendroenydris/consistency_models.git#egg=consistency_models"
+
 echo "‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾"
 echo "Running Command: $cmd2"
 echo "――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――"
-
-# running the python script
-cmd2="pip install -e git+https://github.com/dendroenydris/consistency_models.git#egg=consistency_models"
 apptainer exec --nv def/environment_image.sif $cmd2
 
 echo "‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾"
