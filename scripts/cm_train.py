@@ -9,7 +9,7 @@ import torch
 import wandb
 
 from cm import dist_util, logger
-from cm.image_datasets import load_data
+from cm.image_datasets import load_data, load_idataset
 from cm.resample import create_named_schedule_sampler
 from cm.script_util import (
     model_and_diffusion_defaults,
@@ -53,7 +53,7 @@ def main():
     )
     model_and_diffusion_kwargs["distillation"] = distillation
     model, diffusion = create_model_and_diffusion(**model_and_diffusion_kwargs)
-    
+
     model.to(dist_util.dev())
     model.train()
     if args.use_fp16:
@@ -66,19 +66,27 @@ def main():
         batch_size = args.global_batch_size // dist.get_world_size()
         if args.global_batch_size % dist.get_world_size() != 0:
             logger.log(
-                f"warning, using smaller global_batch_size of {dist.get_world_size()*batch_size} instead of {args.global_batch_size}"
+                f"warning, using smaller global_batch_size of {
+                    dist.get_world_size()*batch_size} instead of {args.global_batch_size}"
             )
     else:
         batch_size = args.batch_size
 
-    data = load_data(
+    # data= load_data(
+    #     data_dir=args.data_dir,
+    #     batch_size=batch_size,
+    #     image_size=args.image_size,
+    #     class_cond=args.class_cond,
+    # )
+    dataset = load_idataset(
         data_dir=args.data_dir,
         batch_size=batch_size,
         image_size=args.image_size,
         class_cond=args.class_cond,
     )
+    data = dist_util.get_dataloader(dataset, micro_batch_size=batch_size)
+
     # data = load_dataset(args.data_dir)
-    # data = dist_util.get_dataloader(data)
 
     if len(args.teacher_model_path) > 0:  # path to the teacher score model.
         logger.log(f"loading the teacher model from {args.teacher_model_path}")
@@ -122,7 +130,7 @@ def main():
     target_model = dist_util.wrap_model(target_model)
     if teacher_model:
         teacher_model = dist_util.wrap_model(teacher_model)
-        
+
     dist_util.sync_params(target_model.parameters())
     dist_util.sync_params(target_model.buffers())
 
