@@ -197,7 +197,7 @@ class KarrasDenoiser:
         probs_unscaled = measure(sigma_i[1:]) - measure(sigma_i[:-1])
         probs_scaled = probs_unscaled / probs_unscaled.sum()
         # sampling the indices proporational to the difference of erfs defined in table 1
-        indices = th.from_numpy(np.random.choice(_i.numpy(), size=(x_start.shape[0],), p=probs_scaled.numpy())).to(x_start.device)
+        indices = th.from_numpy(np.random.choice(_i[:-1].numpy(), size=(x_start.shape[0],), p=probs_scaled.numpy())).to(x_start.device)
 
         # indices = th.randint(
         #     0, num_scales - 1, (x_start.shape[0],), device=x_start.device
