@@ -51,8 +51,8 @@ def load_data(
         image_size,
         all_files,
         classes=classes,
-        shard=MPI.COMM_WORLD.Get_rank(),
-        num_shards=MPI.COMM_WORLD.Get_size(),
+        shard=int(os.getenv("SLURM_PROCID", 0)),
+        num_shards=int(os.getenv("SLURM_NTASKS", 1)),
         random_crop=random_crop,
         random_flip=random_flip,
     )
@@ -108,8 +108,8 @@ def load_idataset(
         image_size,
         all_files,
         classes=classes,
-        shard=MPI.COMM_WORLD.Get_rank(),
-        num_shards=MPI.COMM_WORLD.Get_size(),
+        shard=int(os.getenv("SLURM_PROCID", 0)),  
+        num_shards=int(os.getenv("SLURM_NTASKS", 1)), 
         random_crop=random_crop,
         random_flip=random_flip,
     )
